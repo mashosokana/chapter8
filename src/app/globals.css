@@ -25,3 +25,18 @@ body {
     text-wrap: balance;
   }
 }
+
+body {
+  color: white;
+}
+
+/* もしリンクの色も白にしたい場合 */
+a {
+  color: white;
+  text-decoration: none;
+}
+
+/* 見出しや本文のカラーも明示的に指定する */
+h1, h2, h3, p {
+  color: white;
+}

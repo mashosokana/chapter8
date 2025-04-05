@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import styles from "../_Home/Home.module.css";
+import styles from "../Home/Home.module.css";
 import Link from "next/link";
 
 type Post = {

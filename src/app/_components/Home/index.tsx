@@ -8,21 +8,32 @@ import { MicroCmsPost } from "@/app/types/MicroCmsPost";
 
 const Home: React.FC = () => {
   const [posts, setPosts] = useState<MicroCmsPost[]>([]);
+  const [loading,setLoading] = useState<boolean>(true);
 
     useEffect (() => {
       const fetcher = async () => {
-        const res = await fetch("https://gungun.microcms.io/api/v1/blog", {
-          headers: {
-            'X-MICROCMS-API-KEY': process.env
-            .NEXT_PUBLIC_MICROCMS_API_KEY as string,
-          },
-        })
-        const { contents } = await res.json()
-        setPosts(contents)
-      }
+        setLoading(true);
+        try {
+          const res = await fetch("https://gungun.microcms.io/api/v1/blog", {
+            headers: {
+              'X-MICROCMS-API-KEY': process.env
+              .NEXT_PUBLIC_MICROCMS_API_KEY as string,
+            },
+          })
+          const { contents } = await res.json()
+          setPosts(contents)
+        } catch (error) {
+          console.error("記事一覧の取得に失敗しました", error);
+        }
+        setLoading(false);
+      };
       
       fetcher()
     }, [])
+    
+    if (loading) {
+      return <div>読み込み中...</div>;
+    }
 
   return (
     <div>

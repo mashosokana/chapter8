@@ -1,41 +1,28 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import styles from "../Home/Home.module.css";
+import styles from "./Home.module.css";
 import Link from "next/link";
+import { MicroCmsPost } from "@/app/types/MicroCmsPost";
 
-type Post = {
-  id: string;
-  createdAt: number;
-  categories: string[];
-  title: string;
-  content: string;
-}
 
 const Home: React.FC = () => {
-  const [posts, stePosts] = useState<Post[]>([]);
-  const [loading,setLoading] = useState<boolean>(true);
+  const [posts, setPosts] = useState<MicroCmsPost[]>([]);
 
     useEffect (() => {
       const fetcher = async () => {
-        try {
-          const res = await fetch(
-            "https://1hmfpsvto6.execute-api.ap-northeast-1.amazonaws.com/dev/posts"
-          );
-          const data = await res.json();
-          console.log("取得したデータ", data);
-          stePosts(data.posts);
-        } catch (error) {
-          console.error("記事一覧の取得に失敗しました",error);
-        }
-        setLoading(false);
-      };
-      fetcher();
-    },[]);
-    
-    if (loading) {
-      return <div>読み込み中...</div>;
-    }
+        const res = await fetch("https://gungun.microcms.io/api/v1/blog", {
+          headers: {
+            'X-MICROCMS-API-KEY': process.env
+            .NEXT_PUBLIC_MICROCMS_API_KEY as string,
+          },
+        })
+        const { contents } = await res.json()
+        setPosts(contents)
+      }
+      
+      fetcher()
+    }, [])
 
   return (
     <div>
@@ -50,11 +37,11 @@ const Home: React.FC = () => {
                           {new Date(post.createdAt).toLocaleDateString()}
                         </div>
                         <div className={styles.postCategories}>
-                          {post.categories.map((category: string, id: number) => (
-                           <p key={id} className={styles.postCategory}>
-                             {category.trim()}
-                            </p>
-                          ))}
+                        {post.categories.map((category, id) => (
+                          <p key={id} className={styles.postCategory}>
+                           {category.name}
+                          </p>
+                        ))}  
                         </div>
                       </div>
                       <p className={styles.postTotle}>{post.title}</p>

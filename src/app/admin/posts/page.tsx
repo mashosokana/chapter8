@@ -4,20 +4,30 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { Post } from "@/types/post"
 import styles from './page.module.css'
+import useSupabaseSession from "@/app/_hooks/useSupabaseSession"
+
 
 
 export default function Page() {
   const [posts,setPosts] = useState<Post[]>([])
+  const { token } = useSupabaseSession()
 
   useEffect(() => {
+    if (!token) return
+
     const fetcher = async () => {
-      const res = await fetch('/api/admin/posts')
+      const res = await fetch('/api/admin/posts', {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token,
+        },
+      })
       const { posts } = await res.json()
-      setPosts(posts)
+      setPosts([...posts])
     }
 
     fetcher()
-  }, [])
+  }, [token])
 
   return (
     <div className={styles.wrapper}>

@@ -1,15 +1,24 @@
 .header {
-  background-color: #222222;
-  color: #fff;
-  padding: 24px;
+  background-color: #1f2937; /* bg-gray-800 */
+  color: white;
+  padding: 1.5rem; /* p-6 */
   font-weight: bold;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 72px;
 }
 
-.headerLink {
-  color: #fff;
+.link {
+  color: white;
+  text-decoration: none;
 }
 
+.link:hover {
+  text-decoration: underline;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}

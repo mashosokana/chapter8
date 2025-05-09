@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import styles from "./Page.module.scss";
 import { Post } from "@/types/post";
+import { supabase } from "@/utils/supabase";
 
 
 const DetailsPage: React.FC =() => {
@@ -14,19 +15,31 @@ const DetailsPage: React.FC =() => {
 
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [thumbnailImageUrl, setThumbnailImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
     const fetcher =async () => {
       setLoading(true)
       try {
-        const res = await fetch(
-          `/api/posts/${id}`);
+        const res = await fetch(`/api/posts/${id}`);
         const data = await res.json();
         console.log("取得した記事データ", data);
-        console.log("サムネイルURL", data.post?.thumbnailUrl);
-
+      
         setPost(data.post);
+
+        if (data.post.thumbnailImageKey) {
+          const { data: imageData } = await supabase.storage
+            .from("post-thumbnail")
+            .getPublicUrl(data.post.thumbnailImageKey);
+          
+          if (imageData.publicUrl) {
+            console.log("サムネイルURL", imageData.publicUrl);
+            setThumbnailImageUrl(imageData.publicUrl);
+          } else {
+            console.warn("公開URLが取得できていませんでした");
+          }
+        } 
       } catch (error) {
         console.error("記事の詳細の取得に失敗しました",error);
       }
@@ -52,10 +65,9 @@ const DetailsPage: React.FC =() => {
             height={400}
             width={800}
             src={
-              post.thumbnailUrl?.startsWith("html")
-              ? post.thumbnailUrl 
-              :'https://placehold.jp/800x400.png'}
-            alt= ""
+              thumbnailImageUrl ?? 'https://placehold.jp/800x400.png'
+            }
+            alt= "サムネイル"
             className={styles.img}
           />  
         </div>

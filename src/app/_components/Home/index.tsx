@@ -3,25 +3,20 @@
 import React, { useState, useEffect } from "react";
 import styles from "./Home.module.css";
 import Link from "next/link";
-import { MicroCmsPost } from "@/app/types/MicroCmsPost";
+import { Post } from "@/types/post";
 
 
 const Home: React.FC = () => {
-  const [posts, setPosts] = useState<MicroCmsPost[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading,setLoading] = useState<boolean>(true);
 
     useEffect (() => {
       const fetcher = async () => {
         setLoading(true);
         try {
-          const res = await fetch("https://gungun.microcms.io/api/v1/blog", {
-            headers: {
-              'X-MICROCMS-API-KEY': process.env
-              .NEXT_PUBLIC_MICROCMS_API_KEY as string,
-            },
-          })
-          const { contents } = await res.json()
-          setPosts(contents)
+          const res = await fetch(`/api/posts`);
+          const data = await res.json();
+          setPosts(data.posts);
         } catch (error) {
           console.error("記事一覧の取得に失敗しました", error);
         }
@@ -48,9 +43,9 @@ const Home: React.FC = () => {
                           {new Date(post.createdAt).toLocaleDateString()}
                         </div>
                         <div className={styles.postCategories}>
-                        {post.categories.map((category, id) => (
+                        {(post.postCategories || []).map((pc, id) => (
                           <p key={id} className={styles.postCategory}>
-                           {category.name}
+                           {pc.category.name}
                           </p>
                         ))}  
                         </div>

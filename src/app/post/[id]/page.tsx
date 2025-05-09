@@ -4,14 +4,15 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import styles from "./Page.module.scss";
-import { MicroCmsPost } from "@/app/types/MicroCmsPost";
+import { Post } from "@/types/post";
+
 
 const DetailsPage: React.FC =() => {
 
   const params = useParams();
   const id = params?.id;
 
-  const [post, setPost] = useState<MicroCmsPost | null>(null);
+  const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -20,17 +21,12 @@ const DetailsPage: React.FC =() => {
       setLoading(true)
       try {
         const res = await fetch(
-          `https://gungun.microcms.io/api/v1/blog/${id}`,
-          {
-            headers: {
-              'X-MICROCMS-API-KEY': process.env
-            .NEXT_PUBLIC_MICROCMS_API_KEY as string,
-            },
-          },
-        );
+          `/api/posts/${id}`);
         const data = await res.json();
         console.log("取得した記事データ", data);
-        setPost(data);
+        console.log("サムネイルURL", data.post?.thumbnailUrl);
+
+        setPost(data.post);
       } catch (error) {
         console.error("記事の詳細の取得に失敗しました",error);
       }
@@ -55,7 +51,10 @@ const DetailsPage: React.FC =() => {
           <Image
             height={400}
             width={800}
-            src={post.thumbnail.url}
+            src={
+              post.thumbnailUrl?.startsWith("html")
+              ? post.thumbnailUrl 
+              :'https://placehold.jp/800x400.png'}
             alt= ""
             className={styles.img}
           />  
@@ -66,7 +65,7 @@ const DetailsPage: React.FC =() => {
               {new Date(post.createdAt).toLocaleDateString()}
             </div>
             <div className={styles.postCategories}>
-              {post.categories.map((category) => (
+              {post.postCategories.map(({ category }) => (
                   <div key={category.id} className={styles.postCategory}>
                     {category.name}
                   </div> 

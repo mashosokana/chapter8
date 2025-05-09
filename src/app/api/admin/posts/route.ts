@@ -1,9 +1,19 @@
 import { PrismaClient } from '@prisma/client'
 import { NextRequest,NextResponse } from 'next/server'
+import { supabaseServer } from '@/lib/supabase-server'
 
 const prisma = new PrismaClient()
 
-export const GET = async () => {
+export const GET = async (request:NextRequest) => {
+  const token = request.headers.get('Authorization') ?.replace('Bearer ', '') ?? ''
+
+  const supabase = supabaseServer(token)
+  const { data: { user }, error } = await supabase.auth.getUser()
+
+  if (error || !user) {
+    return NextResponse.json({ status: '認証エラー' }, {status: 401 })
+
+  }
   try {
     const posts = await prisma.post.findMany({
       include: {
@@ -25,6 +35,7 @@ export const GET = async () => {
 
     return NextResponse.json({ status: 'OK', posts: posts }, {status: 200 })
   } catch (error) {
+    console.error('*/api/postsでエラー', error);
     if (error instanceof Error)
       return NextResponse.json({ status: error.message }, {status: 400 })
   }
@@ -34,20 +45,28 @@ interface CreatePostRequestBody {
   title: string
   content: string
   categories: { id: number }[]
-  thumbnailUrl: string
+  thumbnailImageKey: string
 }
 
 export const POST = async (request: NextRequest) => {
+  const token = request.headers.get('Authorization')?.replace('Bearer ', '') ??''
+  const supabase = supabaseServer(token)
+  const { data: { user }, error } = await supabase.auth.getUser()
+
+  if ( error || !user) {
+    return NextResponse.json({ status: '認証エラー' },{ status: 401 })
+  }
+
   try {
     const body = await request.json()
 
-    const { title, content, categories, thumbnailUrl }: CreatePostRequestBody = body
+    const { title, content, categories, thumbnailImageKey }: CreatePostRequestBody = body
 
     const data = await prisma.post.create({
       data: {
         title,
         content,
-        thumbnailUrl,
+        thumbnailImageKey,
       },
     })
 

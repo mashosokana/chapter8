@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import styles from "../_components/Layout.module.css"
+import { useRouteGuard } from "./_hooks/useRouteGuard"
 
 
 export default function AdminLayout({
@@ -10,9 +11,11 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
+  useRouteGuard()
   const pathname = usePathname()
-  const isSelected = (href: string) => pathname.includes(href)
-  
+  const isSelected = (href: string) => {
+    return pathname.includes(href)
+  }
 
   return (
     <div className={styles.pageContainer}>

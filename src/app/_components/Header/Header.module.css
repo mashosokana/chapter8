@@ -1,0 +1,14 @@
+.header {
+  background-color: #222222;
+  color: #fff;
+  padding: 24px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.headerLink {
+  color: #fff;
+}
+

@@ -3,29 +3,41 @@
 import React, { useState, useEffect } from "react";
 import styles from "./Home.module.css";
 import Link from "next/link";
-import { MicroCmsPost } from "@/app/types/MicroCmsPost";
+import { Post } from "@/types/post";
 
 
 const Home: React.FC = () => {
-  const [posts, setPosts] = useState<MicroCmsPost[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading,setLoading] = useState<boolean>(true);
 
     useEffect (() => {
       const fetcher = async () => {
         setLoading(true);
         try {
-          const res = await fetch("https://gungun.microcms.io/api/v1/blog", {
-            headers: {
-              'X-MICROCMS-API-KEY': process.env
-              .NEXT_PUBLIC_MICROCMS_API_KEY as string,
-            },
-          })
-          const { contents } = await res.json()
-          setPosts(contents)
+          console.log("記事一覧を取得中...");
+          const res = await fetch(`/api/posts`);
+
+          if (!res.ok) {
+            console.error('一覧取得でステータスError', res.status);
+            setPosts([]);
+            return;
+          }
+
+          const data = await res.json();
+          console.log("取得した記事一覧", data);
+
+          if (data.posts) {
+            setPosts(data.posts);
+          } else {
+            console.warn("記事が存在しません");
+            setPosts([]);
+          }
         } catch (error) {
           console.error("記事一覧の取得に失敗しました", error);
+          setPosts([]);
+        } finally {
+          setLoading(false);
         }
-        setLoading(false);
       };
       
       fetcher()
@@ -33,6 +45,10 @@ const Home: React.FC = () => {
     
     if (loading) {
       return <div>読み込み中...</div>;
+    }
+
+    if (posts.length === 0) {
+      return <div>記事が見つかりません</div>;
     }
 
   return (
@@ -48,14 +64,14 @@ const Home: React.FC = () => {
                           {new Date(post.createdAt).toLocaleDateString()}
                         </div>
                         <div className={styles.postCategories}>
-                        {post.categories.map((category, id) => (
+                        {(post.postCategories || []).map((pc, id) => (
                           <p key={id} className={styles.postCategory}>
-                           {category.name}
+                           {pc.category.name}
                           </p>
                         ))}  
                         </div>
                       </div>
-                      <p className={styles.postTotle}>{post.title}</p>
+                      <p className={styles.postTitle}>{post.title}</p>
                       <div 
                         className={styles.postBody}
                         dangerouslySetInnerHTML={{__html:post.content}} 

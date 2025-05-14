@@ -1,20 +1,14 @@
 import { PrismaClient } from '@prisma/client'
 import { NextRequest,NextResponse } from 'next/server'
-import { supabaseServer } from '@/lib/supabase-server'
+import { assertAuth } from '@/app/_utils/assertAuth' 
 
 const prisma = new PrismaClient()
 
-export const GET = async (request:NextRequest) => {
-  const token = request.headers.get('Authorization') ?.replace('Bearer ', '') ?? ''
+export const GET = async (request: NextRequest) => {
 
-  const supabase = supabaseServer(token)
-  const { data: { user }, error } = await supabase.auth.getUser()
-
-  if (error || !user) {
-    return NextResponse.json({ status: '認証エラー' }, {status: 401 })
-
-  }
   try {
+    await assertAuth(request);
+
     const posts = await prisma.post.findMany({
       include: {
         postCategories: {
@@ -31,15 +25,17 @@ export const GET = async (request:NextRequest) => {
       orderBy: {
         createdAt: 'desc',
       },
-    })
+    });
 
     return NextResponse.json({ status: 'OK', posts: posts }, {status: 200 })
   } catch (error) {
     console.error('*/api/postsでエラー', error);
-    if (error instanceof Error)
-      return NextResponse.json({ status: error.message }, {status: 400 })
+    if ((error as Error).message === 'UNAUTHORIZED') {
+      return NextResponse.json({ status: '認証エラー' }, {status: 401 });
+    }
+    return NextResponse.json({ status: (error as Error).message}, {status: 400 });
   }
-}
+};
 
 interface CreatePostRequestBody {
   title: string
@@ -49,15 +45,9 @@ interface CreatePostRequestBody {
 }
 
 export const POST = async (request: NextRequest) => {
-  const token = request.headers.get('Authorization')?.replace('Bearer ', '') ??''
-  const supabase = supabaseServer(token)
-  const { data: { user }, error } = await supabase.auth.getUser()
-
-  if ( error || !user) {
-    return NextResponse.json({ status: '認証エラー' },{ status: 401 })
-  }
-
   try {
+    await assertAuth(request);
+    
     const body = await request.json()
 
     const { title, content, categories, thumbnailImageKey }: CreatePostRequestBody = body

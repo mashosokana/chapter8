@@ -1,21 +1,8 @@
 import { PrismaClient } from '@prisma/client'
 import {  NextResponse, NextRequest } from "next/server"
-import { supabaseServer } from "@/lib/supabase-server"
-import { SupabaseClient } from "@supabase/supabase-js"
+import { assertAuth } from "@/app/_utils/assertAuth";
 
 const prisma = new PrismaClient()
-
-//認証を確認する関数
-async function assertAuth(request: NextRequest) {
-  const token = request.headers.get('Authorization')?.replace('Bearer ', '') ?? ''
-  const supabase = supabaseServer(token) as SupabaseClient
-
-  const { data: { user }, error } = await supabase.auth.getUser()
-
-  if (error || !user) {
-    throw new Error('UNSUTHORIZED')
-  }
-}
 
 export const GET = async (request: NextRequest) => {
   try {

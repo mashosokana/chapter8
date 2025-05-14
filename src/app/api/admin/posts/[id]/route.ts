@@ -1,34 +1,19 @@
 import { NextRequest,NextResponse } from "next/server"
 import { PrismaClient } from '@prisma/client'
-import { supabaseServer } from "@/lib/supabase-server"
-import { SupabaseClient } from "@supabase/supabase-js"
+import { assertAuth } from "@/app/_utils/assertAuth";
 
 const prisma = new PrismaClient()
-
-async function assertAuth(request: NextRequest) {
-  const token = request.headers.get('Authorization')?.replace('Bearer ', '')?? ''
-  const supabase = supabaseServer(token) as SupabaseClient
-
-  const { data: { user }, error } = await supabase.auth.getUser()
-
-  if (error || !user) {
-    throw new Error('UNAUTHORIZED')
-  }
-}
 
 export const GET = async (
   request: NextRequest,
   { params }: { params: { id: string} }) => {
   try {
-    console.log("params.id", params.id)
-
+    await assertAuth(request)
+    
     const postId = Number(params.id)
-
     if (isNaN(postId) || !params.id) {
       return NextResponse.json({ status: '無効なIDです'}, { status: 400})
     }
-
-    await assertAuth(request)
 
     const post = await prisma.post.findUnique({
       where: { id: Number(params.id) },

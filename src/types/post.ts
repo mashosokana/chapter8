@@ -5,8 +5,8 @@ export interface Post {
   title: string
   content: string
   createdAt: string
+  thumbnailImageKey: string
   postCategories: { category: Category }[]
-  thumbnailUrl: string
 }
 
 export interface MicroCmsPost {

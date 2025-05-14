@@ -1,10 +1,14 @@
 import { PrismaClient } from '@prisma/client'
 import { NextRequest,NextResponse } from 'next/server'
+import { assertAuth } from '@/app/_utils/assertAuth' 
 
 const prisma = new PrismaClient()
 
-export const GET = async () => {
+export const GET = async (request: NextRequest) => {
+
   try {
+    await assertAuth(request);
+
     const posts = await prisma.post.findMany({
       include: {
         postCategories: {
@@ -21,33 +25,38 @@ export const GET = async () => {
       orderBy: {
         createdAt: 'desc',
       },
-    })
+    });
 
     return NextResponse.json({ status: 'OK', posts: posts }, {status: 200 })
   } catch (error) {
-    if (error instanceof Error)
-      return NextResponse.json({ status: error.message }, {status: 400 })
+    console.error('*/api/postsでエラー', error);
+    if ((error as Error).message === 'UNAUTHORIZED') {
+      return NextResponse.json({ status: '認証エラー' }, {status: 401 });
+    }
+    return NextResponse.json({ status: (error as Error).message}, {status: 400 });
   }
-}
+};
 
 interface CreatePostRequestBody {
   title: string
   content: string
   categories: { id: number }[]
-  thumbnailUrl: string
+  thumbnailImageKey: string
 }
 
 export const POST = async (request: NextRequest) => {
   try {
+    await assertAuth(request);
+    
     const body = await request.json()
 
-    const { title, content, categories, thumbnailUrl }: CreatePostRequestBody = body
+    const { title, content, categories, thumbnailImageKey }: CreatePostRequestBody = body
 
     const data = await prisma.post.create({
       data: {
         title,
         content,
-        thumbnailUrl,
+        thumbnailImageKey,
       },
     })
 

@@ -4,10 +4,12 @@ import React, { useState } from "react"
 import { useRouter } from "next/navigation"
 import styles from './page.module.css'
 import { CategoryForm } from '../_components/CategoryForm'
+import useSupabaseSession from "@/app/_hooks/useSupabaseSession"
 
 export default function Page() {
   const [name,setName] = useState('')
   const router = useRouter()
+  const { token } = useSupabaseSession()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -16,6 +18,7 @@ export default function Page() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
       },
       body: JSON.stringify({ name}),
     })

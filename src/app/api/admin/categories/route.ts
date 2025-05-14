@@ -1,10 +1,13 @@
 import { PrismaClient } from '@prisma/client'
-import {  NextResponse } from "next/server"
+import {  NextResponse, NextRequest } from "next/server"
+import { assertAuth } from "@/app/_utils/assertAuth";
 
 const prisma = new PrismaClient()
 
-export const GET = async () => {
+export const GET = async (request: NextRequest) => {
   try {
+    await assertAuth(request)
+
     const categories = await prisma.category.findMany({
       orderBy: {
         createdAt: 'desc',
@@ -13,9 +16,10 @@ export const GET = async () => {
 
     return NextResponse.json({status: 'OK', categories}, { status: 200})
   } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json({ status: error.message}, { status: 400})
+    if ((error as Error).message === 'UNAUTHORIZED') {
+      return NextResponse.json({ status: '認証エラー'}, { status: 401})
     }
+    return NextResponse.json({ status: (error as Error).message }, { status: 400 })
   }
 }
 
@@ -25,8 +29,10 @@ interface CreateCategoryRequestBody {
   name:string
 }
 
-export const POST = async (request: Request) => {
+export const POST = async (request: NextRequest) => {
   try {
+    await assertAuth(request)
+
     const body = await request.json()
 
     const { name }: CreateCategoryRequestBody = body
@@ -41,11 +47,12 @@ export const POST = async (request: Request) => {
       status: 'OK',
       message: '作成しました',
       id: data.id,
-    })
+    }, { status: 200 })
   } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json({ status: error.message }, {status: 400})
+    if ((error as Error).message === 'UNAUTHORIZED') {
+      return NextResponse.json({ status: '認証エラー' }, {status: 401})
     }
+    return NextResponse.json({ status: (error as Error).message }, { status: 400 })
   }
 }
 

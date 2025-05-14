@@ -1,6 +1,6 @@
 'use client'
 
-import { supabase } from "@/utils/supabase"
+import { supabase } from "@/utils/supabase" //初期設定ファイル
 import { useState } from "react"
 import styles from "./page.module.css"
 

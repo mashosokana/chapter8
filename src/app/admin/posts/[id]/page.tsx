@@ -21,7 +21,7 @@ export default function Page() {
 
   const { id } = useParams()
   const router = useRouter()
-  const { token } = useSupabaseSession()
+  const { token, isLoading } = useSupabaseSession()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,56 +60,54 @@ export default function Page() {
   }
 
   useEffect(() => {
-    if (!token) return
-
-    const fetcher = async () => {
-      console.log("📌 Fetching article data...");
-
-      // 認証トークンを確認
-      console.log("🔑 Token:", token);
-
-      const res = await fetch(`/api/admin/posts/${id}`,{
-        headers: { Authorization: `Bearer ${token}`},
-      })
-
-      if (!res.ok) {
-        const { status } = await res.json()
-        alert(`取得失敗: ${status}`)
-        router.replace('/admin/posts')
-        return
-      }
-
-      const { post }: { post: Post } = await res.json()
-      console.log("📌 取得した記事データ:", post)
-
-      setTitle(post.title)
-      setContent(post.content)
-      setThumbnailImageKey(post.thumbnailImageKey ?? '')
-      setCategories(post.postCategories.map((pc) => pc.category))
-
-      console.log("🔍 サムネイルキー:", post.thumbnailImageKey)
-
-
-      if (post.thumbnailImageKey) {
-        const { data } =  await supabase.storage
-          .from("post-thumbnail")
-          .getPublicUrl(post.thumbnailImageKey)
-
-       if (data.publicUrl) {
-          console.log("公開URL取得:", data.publicUrl)
-          setThumbnailImageUrl(data.publicUrl)
-        } else {
-          console.warn("公開URLが取得できませんでした")
-        }
-      } else {
-        console.warn("🔍 サムネイルキーがありません")
-      }
-
-      setIsloading(false)
+    if (isLoading) return;
+    if (!token) {
+      console.warn("認証トークンがみつかりません");
+      return;
     }
 
-    fetcher()
-  }, [id, token, router])
+    const fetcher = async () => {
+      try {
+        const res = await fetch(`/api/admin/posts/${id}`,{
+          headers: { Authorization: `Bearer ${token}`},
+        });
+        
+        if (!res.ok) {
+          const { status } = await res.json()
+          alert(`取得失敗: ${status}`)
+          router.replace('/admin/posts')
+          return
+        }
+        
+        const { post }: { post: Post } = await res.json()
+        console.log("取得した記事データ:", post)
+        
+        setTitle(post.title)
+        setContent(post.content)
+        setThumbnailImageKey(post.thumbnailImageKey ?? '')
+        setCategories(post.postCategories.map((pc) => pc.category))
+        
+        if (post.thumbnailImageKey) {
+          const { data } =  await supabase.storage
+            .from("post-thumbnail")
+            .getPublicUrl(post.thumbnailImageKey)
+  
+         if (data.publicUrl) {
+            console.log("公開URL取得:", data.publicUrl)
+            setThumbnailImageUrl(data.publicUrl)
+          } 
+        }
+        
+        setIsloading(false);
+
+      } catch (error) {
+        console.error("記事取得エラー", error);
+        setIsloading(false);
+      }
+    };
+
+    fetcher();
+  }, [id, token, isLoading, router]);
 
   if (isloading) return <p>loading...</p>
 

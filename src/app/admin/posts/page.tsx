@@ -19,7 +19,7 @@ export default function Page() {
       const res = await fetch('/api/admin/posts', {
         headers: {
           'Content-Type': 'application/json',
-          Authorization: token,
+          'Authorization': `Bearer ${token}`
         },
       })
       const { posts } = await res.json()
